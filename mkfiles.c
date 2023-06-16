@@ -1,42 +1,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
+
+#define NUM_FILES 100
+#define FILE_SIZE_MB 1
+#define FILE_SIZE (FILE_SIZE_MB * 1024 * 1024)
+
+void generateRandomText(char* buffer, size_t size) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    size_t charsetSize = sizeof(charset) - 1;
+    for (size_t i = 0; i < size; i++) {
+        buffer[i] = charset[rand() % charsetSize];
+    }
+}
 
 int main() {
-    char dirname[256];
-    printf("Enter the name of the new directory: ");
-    scanf("%s", dirname);
+    // Create the directory to store the files
+    system("mkdir files");
 
-    // Create the new directory
-    int status = mkdir(dirname, 0777);
-    if (status != 0) {
-        printf("Failed to create the directory.\n");
-        return 1;
-    }
+    char filename[20];
+    char buffer[FILE_SIZE];
 
-    // Create 10 files in the new directory
-    for (int i = 1; i <= 10; i++) {
-        char filename[256];
-        printf("Enter the name of file %d: ", i);
-        scanf("%s", filename);
+    for (int i = 0; i < NUM_FILES; i++) {
+        // Generate a unique filename
+        snprintf(filename, sizeof(filename), "files/file%d.txt", i + 1);
 
-        // Generate the file path
-        char filepath[256];
-        snprintf(filepath, sizeof(filepath), "%s/%s", dirname, filename);
+        // Generate random text
+        generateRandomText(buffer, FILE_SIZE);
 
-        // Create the file
-        FILE* file = fopen(filepath, "w");
+        // Open the file for writing
+        FILE* file = fopen(filename, "w");
         if (file == NULL) {
-            printf("Failed to create file '%s'.\n", filename);
-            continue;
+            printf("Error creating file: %s\n", filename);
+            return 1;
         }
 
-        // Close the file
+        // Write the random text to the file
+        size_t bytesWritten = fwrite(buffer, 1, FILE_SIZE, file);
+        if (bytesWritten != FILE_SIZE) {
+            printf("Error writing to file: %s\n", filename);
+            fclose(file);
+            return 1;
+        }
+
         fclose(file);
     }
 
-    printf("Files created successfully in the directory '%s'.\n", dirname);
+    printf("%d files created successfully.\n", NUM_FILES);
 
     return 0;
 }
